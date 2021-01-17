@@ -15,26 +15,26 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 
+import javax.sql.DataSource;
+
 @Configuration
 @EnableAuthorizationServer
 public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
 	private final AuthenticationManager authenticationManager;
+
+	private final DataSource dataSource;
 	private final PasswordEncoder passwordEncoder;
 
-	public AuthServerConfig(AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
+	public AuthServerConfig(AuthenticationManager authenticationManager, DataSource dataSource, PasswordEncoder passwordEncoder) {
 		this.authenticationManager = authenticationManager;
+		this.dataSource = dataSource;
 		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
 	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-		// TODO use database instead of in memory clients
-		clients.inMemory()
-				.withClient("client1")
-				.secret(passwordEncoder.encode("secret1"))
-				.authorizedGrantTypes("password") // TODO use another grant type
-				.scopes("read");
+		clients.jdbc(dataSource).passwordEncoder(passwordEncoder);
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer security) {
-		security.tokenKeyAccess("permitAll()"); // TODO change to isAuthenticated()
+		security.tokenKeyAccess("isAuthenticated()");
 	}
 
 	@Bean
