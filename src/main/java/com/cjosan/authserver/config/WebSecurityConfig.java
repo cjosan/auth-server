@@ -4,34 +4,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+	private final DataSource dataSource;
+
+	public WebSecurityConfig(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
+
 	@Bean
-	public UserDetailsService uds() {
-		// TODO use database instead of in memory users
-		var uds = new InMemoryUserDetailsManager();
-
-		var u1 = User
-				.withUsername("john")
-				.password("12345")
-				.authorities("read").build();
-
-		uds.createUser(u1);
-
-		return uds;
+	public UserDetailsService userDetailsService() {
+		return new JdbcUserDetailsManager(dataSource);
 	}
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-		// TODO use Bcrypt
-		return NoOpPasswordEncoder.getInstance();
+		return new BCryptPasswordEncoder();
 	}
 
 	@Override
